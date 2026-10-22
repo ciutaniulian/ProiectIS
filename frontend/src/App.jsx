@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { demoDashboard, formatMoney } from './dashboard.js'
+import GroupChat from './GroupChat.jsx'
 import './App.css'
 
 const iconPaths = {
   home: 'm3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9',
   groups: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-3.87',
   receipt: 'M6 3h12v18l-3-2-3 2-3-2-3 2V3ZM9 7h6M9 11h6',
+  chat: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
 }
 
 function Icon({ name }) {
@@ -22,6 +24,8 @@ function Icon({ name }) {
 function App({ dashboard = demoDashboard }) {
   const [showAllExpenses, setShowAllExpenses] = useState(false)
   const [activeSection, setActiveSection] = useState('acasa')
+  const [activeChatGroup, setActiveChatGroup] = useState(null)
+
   const { user, summary, groups, expenses } = dashboard
   const visibleExpenses = showAllExpenses ? expenses : expenses.slice(0, 2)
   const money = (cents) => formatMoney(cents, dashboard.currency)
@@ -123,12 +127,30 @@ function App({ dashboard = demoDashboard }) {
                     <h3>{group.name}</h3>
                     <p>{group.memberCount} members</p>
                   </div>
+                  <button
+                    type="button"
+                    className="group-chat-btn"
+                    onClick={() => setActiveChatGroup(group)}
+                    aria-label={`Open chat for ${group.name}`}
+                  >
+                    <Icon name="chat" />
+                    <span>Chat</span>
+                  </button>
                 </li>
               ))}
             </ul>
           )}
         </section>
       </main>
+
+      {activeChatGroup && (
+        <GroupChat
+          group={activeChatGroup}
+          currentUser={user}
+          onClose={() => setActiveChatGroup(null)}
+        />
+      )}
+
       <nav className="bottom-nav" aria-label="Main navigation">
         <a href="#acasa" aria-current={activeSection === 'acasa' ? 'location' : undefined} onClick={() => setActiveSection('acasa')}><Icon name="home" /><span>Home</span></a>
         <a href="#grupuri" aria-current={activeSection === 'grupuri' ? 'location' : undefined} onClick={() => setActiveSection('grupuri')}><Icon name="groups" /><span>Groups</span></a>

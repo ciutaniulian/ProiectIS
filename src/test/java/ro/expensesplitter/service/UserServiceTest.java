@@ -90,6 +90,7 @@ public class UserServiceTest {
                 "Example-password-2026!"
         );
 
+
         when(repository.existsByEmail("ana@test.com")).thenReturn(false);
 
         DataIntegrityViolationException failure =

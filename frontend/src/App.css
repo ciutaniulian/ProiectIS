@@ -72,3 +72,29 @@
   .bottom-nav a { flex: 0 1 160px; flex-direction: row; gap: 10px; font-size: 12px; }
 }
 @media (max-width: 359px) { .home { padding: 20px 14px 28px; } .balance-panel { padding: 20px; } .transaction { gap: 8px; } .transaction-icon { width: 32px; height: 36px; } .transaction > strong { font-size: 10px; } }
+
+
+.group-chat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff8ef;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(39, 43, 40, 0.05);
+}
+.group-chat-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.group-chat-btn svg {
+  width: 16px;
+  height: 16px;
+}

@@ -13,7 +13,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ro.expensesplitter.config.PasswordConfig;
 import ro.expensesplitter.config.SecurityConfig;
 import ro.expensesplitter.dto.UserResponse;
 import ro.expensesplitter.entity.Role;
@@ -40,7 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({AuthController.class, CsrfController.class})
 @Import({
         SecurityConfig.class,
-        PasswordConfig.class,
         DatabaseUserDetailsService.class
         })
 public class AuthControllerTest {
