@@ -19,6 +19,11 @@ in automatically. Sessions survive page reloads; remember me lasts seven days.
 For deployment, serve the frontend and `/api` under the same origin using a
 reverse proxy. The Vite development proxy is not included in the static build.
 
+Without MySQL, run `./mvnw.cmd "-Dspring-boot.run.profiles=local" spring-boot:run`
+from the repository root in PowerShell. This profile uses an embedded H2 database
+stored in `.local-data/expense_splitter.mv.db`, so local accounts survive restarts.
+The database files are ignored by Git. No database credentials are required.
+
 ## Files
 
 - `src/App.jsx`: homepage, group list, expandable expense list, and navigation.
