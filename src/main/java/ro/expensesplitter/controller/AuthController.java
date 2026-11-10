@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ro.expensesplitter.dto.RegisterRequest;
+import ro.expensesplitter.dto.UpdateProfileRequest;
 import ro.expensesplitter.dto.UserResponse;
 import ro.expensesplitter.service.UserService;
 
@@ -29,6 +30,11 @@ public class AuthController {
     public UserResponse me(Authentication authentication) {
         String email = authentication.getName();
         return userService.getProfile(email);
+    }
+
+    @PatchMapping("/me")
+    public UserResponse updateProfile(Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
+        return userService.updateProfile(authentication.getName(), request);
     }
 
 }
