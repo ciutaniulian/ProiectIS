@@ -12,23 +12,26 @@ async function request(path, options = {}) {
   }
 
   if (response.ok) return response
+  const isProfileUpdate = path === 'me' && options.method === 'PATCH'
   if (response.status === 401) {
+    if (isProfileUpdate) throw new Error('Your session has expired. Please log in again.')
     if (path === 'me') return null
     if (path === 'login') throw new Error('Incorrect email or password. Please try again.')
     throw new Error('Your request could not be completed. Please try again.')
   }
   if (response.status === 409) throw new Error('This email is already registered. Log in instead.')
   if (response.status === 403) throw new Error('Your security token has expired. Please try again.')
+  if (response.status === 400 && isProfileUpdate) throw new Error('Enter a display name between 1 and 100 characters.')
   if (response.status === 400) throw new Error('Check your details. Passwords must contain 6–64 characters.')
   throw new Error('The server could not complete your request. Please try again.')
 }
 
-async function submit(path, body, contentType) {
+async function submit(path, body, contentType, method = 'POST') {
   // Fetch a fresh token because Spring rotates it after login and logout.
   const csrfResponse = await request('csrf')
   const csrf = await csrfResponse.json()
   return request(path, {
-    method: 'POST',
+    method,
     headers: { [csrf.headerName]: csrf.token, ...(contentType && { 'Content-Type': contentType }) },
     body,
   })
@@ -37,6 +40,11 @@ async function submit(path, body, contentType) {
 export async function getProfile(signal) {
   const response = await request('me', signal ? { signal } : {})
   return response ? response.json() : null
+}
+
+export async function updateProfile({ name }) {
+  const response = await submit('me', JSON.stringify({ name: name.trim() }), 'application/json', 'PATCH')
+  return response.json()
 }
 
 export async function register({ name, email, password }) {
