@@ -40,3 +40,5 @@ build/
 # Andrei_Files
 README.md
 docker-compose.yaml
+docs/Git-workflow.md
+PROGRESS.md

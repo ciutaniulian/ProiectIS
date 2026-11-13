@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ro.expensesplitter.dto.AddMemberRequest;
 import ro.expensesplitter.dto.CreateGroupRequest;
 import ro.expensesplitter.dto.GroupResponse;
+import ro.expensesplitter.dto.MemberResponse;
 import ro.expensesplitter.service.GroupService;
 
 import java.util.List;
@@ -37,5 +38,11 @@ public class GroupController {
     public ResponseEntity<Void> addMember(@PathVariable Long groupId, @RequestBody @Valid AddMemberRequest request, Authentication authentication){
         groupService.addMember(groupId,request,authentication.getName());
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<List<MemberResponse>> getGroupMembers(@PathVariable Long groupId, Authentication authentication){
+        List<MemberResponse> memberResponses= groupService.getGroupMembers(groupId,authentication.getName());
+        return ResponseEntity.ok(memberResponses);
     }
 }

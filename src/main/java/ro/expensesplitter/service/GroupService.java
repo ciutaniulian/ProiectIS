@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ro.expensesplitter.dto.AddMemberRequest;
 import ro.expensesplitter.dto.CreateGroupRequest;
 import ro.expensesplitter.dto.GroupResponse;
+import ro.expensesplitter.dto.MemberResponse;
 import ro.expensesplitter.entity.Group;
 import ro.expensesplitter.entity.GroupMember;
 import ro.expensesplitter.entity.User;
@@ -80,6 +81,21 @@ public class GroupService {
                 .user(newMember)
                 .build();
         groupMemberRepository.save(groupMember);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberResponse> getGroupMembers(Long groupId, String requesterEmail){
+        Group group = groupRepository.findById(groupId).orElseThrow(()->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        User requester = userRepository.findByEmail(requesterEmail).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Requester not found"));
+        boolean isRequesterPartOfGroup = isUserMember(group.getId(), requester.getId());
+        if( ! isRequesterPartOfGroup)
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a member of this group");
+        List<GroupMember> groupMembers = groupMemberRepository.findByGroupId(groupId);
+        return groupMembers.stream()
+                .map(x->new MemberResponse(x.getUser().getId(),x.getUser().getName(),x.getUser().getEmail(),x.getJoinedAt()))
+                .toList();
     }
 
 }

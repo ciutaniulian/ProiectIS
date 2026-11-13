@@ -8,6 +8,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ro.expensesplitter.dto.AddMemberRequest;
 import ro.expensesplitter.dto.CreateGroupRequest;
 import ro.expensesplitter.dto.GroupResponse;
+import ro.expensesplitter.dto.MemberResponse;
 import ro.expensesplitter.entity.Group;
 import ro.expensesplitter.entity.GroupMember;
 import ro.expensesplitter.entity.User;
@@ -15,6 +16,7 @@ import ro.expensesplitter.repository.GroupMemberRepository;
 import ro.expensesplitter.repository.GroupRepository;
 import ro.expensesplitter.repository.UserRepository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -159,5 +161,43 @@ public class GroupServiceTest {
         when(groupMemberRepository.existsByGroupIdAndUserId(10L, 2L)).thenReturn(true);
 
         assertAddMemberFails(HttpStatus.CONFLICT);
+    }
+
+    // ---------- getGroupMembers ----------
+
+    @Test
+    void getGroupMembersReturnsMappedMembers() {
+        Instant joinedAt = Instant.parse("2026-01-01T10:00:00Z");
+        GroupMember membership = GroupMember.builder().group(group).user(newUser).joinedAt(joinedAt).build();
+        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(userRepository.findByEmail("andrei@gmail.com")).thenReturn(Optional.of(requester));
+        when(groupMemberRepository.existsByGroupIdAndUserId(10L, 1L)).thenReturn(true);
+        when(groupMemberRepository.findByGroupId(10L)).thenReturn(List.of(membership));
+
+        List<MemberResponse> result = groupService.getGroupMembers(10L, "andrei@gmail.com");
+
+        assertEquals(List.of(new MemberResponse(2L, "Ana", "ana@gmail.com", joinedAt)), result);
+    }
+
+    @Test
+    void getGroupMembersGroupNotFoundReturns404() {
+        when(groupRepository.findById(10L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> groupService.getGroupMembers(10L, "andrei@gmail.com"));
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(groupMemberRepository, never()).findByGroupId(any());
+    }
+
+    @Test
+    void getGroupMembersRequesterNotMemberReturns403() {
+        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(userRepository.findByEmail("andrei@gmail.com")).thenReturn(Optional.of(requester));
+        when(groupMemberRepository.existsByGroupIdAndUserId(10L, 1L)).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> groupService.getGroupMembers(10L, "andrei@gmail.com"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(groupMemberRepository, never()).findByGroupId(any());
     }
 }
