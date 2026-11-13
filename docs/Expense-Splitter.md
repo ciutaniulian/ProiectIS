@@ -73,9 +73,9 @@ Aplicația trebuie să permită:
 6. Specificarea utilizatorului care a plătit cheltuiala.
 7. Selectarea persoanelor pentru care a fost făcută cheltuiala.
 8. Împărțirea unei cheltuieli:
-   - în mod egal;
-   - după sume stabilite manual;
-   - opțional, după procente.
+    - în mod egal;
+    - după sume stabilite manual;
+    - opțional, după procente.
 9. Calcularea automată a soldului fiecărui membru.
 10. Calcularea relațiilor de datorie:
     - cine trebuie să plătească;
@@ -354,3 +354,40 @@ Autorizarea metodelor completează regulile pentru cererile HTTP. [Documentație
 | O cerere care modifică date nu are un token CSRF valid | Cererea este respinsă. |
 | Utilizator se deconectează și reutilizează sesiunea veche | Accesul la datele protejate este respins. |
 
+
+
+### 14.6 Niste detalii despre imparteala pe treaba:
+
+1. Colegul 1: Înfrumusețarea Frontend-ului (UI / UX / Styling)
+   Branch Git: feature/ui-styling
+   Ce face concret:
+   Creează un Layout general comun (Navbar, Sidebar/Meniu de navigare, footer, zonă centrală de conținut).
+   Stilizează paginile deja existente: Login și Register (arate modern, responsive pe mobil și desktop).
+   Creează un set de componente vizuale reutilizabile pe care le veți folosi toți ceilalți (butoane stilizate, carduri, ferestre modale, input-uri de text, culori de temă).
+   De ce nu vă blochează: El lucrează în mare parte pe fișiere de CSS/stiluri și pe paginile de Auth deja existente. Voi, când faceți pagini noi, doar folosiți stilurile/clasele create de el.
+2. EU   : Backend – Modulul Grupuri și Membri
+   Branch Git: feature/group-management
+   Ce face concret:
+   Entitățile JPA: Group (id, nume, descriere, creatDe) și GroupMember (groupId, userId, rol, joinedAt).
+   Repository și Service pentru operații de grup.
+   Endpoints REST:
+   POST /groups (creează un grup)
+   GET /groups (grupurile din care fac parte)
+   POST /groups/{id}/members (adaugă membru după email/username)
+   Metoda cheie oferită echipei: boolean isUserMember(Long groupId, Long userId) (o veți apela și tu la Chat, și Colegul 3 la Cheltuieli).
+3. Colegul 3: Backend – Modulul Cheltuieli (Expenses)
+   Branch Git: feature/expenses-splitting
+   Ce face concret:
+   Entitățile JPA: Expense (id, groupId, title, amount, paidByUserId, createdAt) și ExpenseSplit (expenseId, userId, sumaDatorata).
+   Endpoints REST:
+   POST /groups/{id}/expenses (adaugă o cheltuială și calculează împărțirea egală între membri)
+   GET /groups/{id}/expenses (lista de cheltuieli din grup)
+   De ce nu e blocat: Lucrează cu un groupId primit în URL, exact ca tine la Chat!
+4. TU: Modulul Complet de Chat (Backend + Componenta de Chat)
+   Branch Git: feature/group-chat
+   Ce faci concret:
+   Entitatea GroupMessage și baza de date (persistență, indexare, paginare).
+   REST API de chat (GET istoric mesaje, POST trimitere mesaj).
+   Securitate (doar membrii grupului pot citi/scrie).
+   Realtime cu WebSocket (Spring WebSocket + STOMP).
+   Componenta React de Chat (ChatBox) care se integrează în pagina de grup.
