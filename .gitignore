@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+
+# Andrei_Files
+README.md
+docker-compose.yaml
