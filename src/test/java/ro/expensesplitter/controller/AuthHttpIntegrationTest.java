@@ -55,6 +55,28 @@ class AuthHttpIntegrationTest {
     }
 
     @Test
+    void profileUpdateRequiresAuthenticationAndPersistsTheNormalizedName() throws Exception {
+        String body = """
+                {"name":"  Ana Popescu  "}
+                """;
+        assertEquals(401, submit("PATCH", "me", body, "application/json").statusCode());
+
+        String email = UUID.randomUUID() + "@example.com";
+        assertEquals(201, post("register", registration(email), "application/json").statusCode());
+        assertEquals(200, post("login", "username=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
+                + "&password=Integration123!", "application/x-www-form-urlencoded").statusCode());
+
+        HttpResponse<String> updated = submit("PATCH", "me", body, "application/json");
+        assertEquals(200, updated.statusCode());
+        assertEquals("Ana Popescu", JsonPath.<String>read(updated.body(), "$.name"));
+
+        HttpResponse<String> profile = get("me");
+        assertEquals(200, profile.statusCode());
+        assertEquals("Ana Popescu", JsonPath.<String>read(profile.body(), "$.name"));
+        assertEquals(email, JsonPath.<String>read(profile.body(), "$.email"));
+    }
+
+    @Test
     void registrationWithoutCsrfIsStillForbidden() throws Exception {
         HttpRequest request = HttpRequest.newBuilder(endpoint("register"))
                 .timeout(Duration.ofSeconds(10))
@@ -98,6 +120,10 @@ class AuthHttpIntegrationTest {
     }
 
     private HttpResponse<String> post(String path, String body, String contentType) throws Exception {
+        return submit("POST", path, body, contentType);
+    }
+
+    private HttpResponse<String> submit(String method, String path, String body, String contentType) throws Exception {
         HttpResponse<String> csrf = get("csrf");
         assertEquals(200, csrf.statusCode());
         String header = JsonPath.read(csrf.body(), "$.headerName");
@@ -105,7 +131,7 @@ class AuthHttpIntegrationTest {
         HttpRequest request = HttpRequest.newBuilder(endpoint(path))
                 .timeout(Duration.ofSeconds(10))
                 .header(header, token).header("Content-Type", contentType)
-                .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+                .method(method, HttpRequest.BodyPublishers.ofString(body)).build();
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 

@@ -31,6 +31,10 @@ public class User {
 
     protected User() {}
 
+    public void rename(String name) {
+        this.name = name;
+    }
+
     public Long getId() {
         return id;
     }

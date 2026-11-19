@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import App from './App.jsx'
 import AuthForm from './AuthForm.jsx'
+import ProfilePage from './ProfilePage.jsx'
 import { getProfile, logout } from './auth.js'
 import { demoDashboard } from './dashboard.js'
 import './Auth.css'
@@ -11,6 +12,7 @@ export default function AuthGateway() {
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -27,6 +29,7 @@ export default function AuthGateway() {
     try {
       await logout()
       setUser(null)
+      setShowProfile(false)
     } catch (failure) {
       setError(failure.message)
     } finally {
@@ -50,10 +53,19 @@ export default function AuthGateway() {
     <>
       <div className="account-bar">
         <span>Signed in as <strong>{user.email}</strong></span>
+        {!showProfile && <button type="button" className="text-button" onClick={() => setShowProfile(true)}>My account</button>}
         <button type="button" className="text-button" onClick={handleLogout} disabled={loggingOut}>{loggingOut ? 'Logging out…' : 'Log out'}</button>
         {error && <p className="auth-error" role="alert">{error}</p>}
       </div>
-      <App dashboard={{ ...demoDashboard, user }} />
+      {showProfile ? (
+        <ProfilePage
+          user={user}
+          onSaved={(profile) => setUser((current) => current?.id === profile.id ? profile : current)}
+          onBack={() => setShowProfile(false)}
+        />
+      ) : (
+        <App dashboard={{ ...demoDashboard, user }} />
+      )}
     </>
   )
 }
