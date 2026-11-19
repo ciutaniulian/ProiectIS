@@ -1,0 +1,63 @@
+.groups-section {
+  display: grid;
+  gap: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.group-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.group-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.group-form label span {
+  font-weight: 400;
+}
+
+.group-form input {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #a9a9b8;
+  border-radius: 0.65rem;
+  color: inherit;
+  background: var(--surface);
+  font: inherit;
+}
+
+.group-entry {
+  flex: 1;
+  min-width: 0;
+}
+
+.group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.9rem;
+  row-gap: 0.4rem;
+}
+
+.group-member {
+  flex-wrap: wrap;
+}
+
+.group-member h4 {
+  margin: 0;
+}
+
+.group-danger {
+  color: #a2243c;
+}
+
+.group-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

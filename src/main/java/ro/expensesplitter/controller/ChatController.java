@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 import ro.expensesplitter.dto.ChatMessageResponse;
 import ro.expensesplitter.service.ChatService;
 
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/group/{groupId}")
 public class ChatController {
@@ -21,7 +23,7 @@ public class ChatController {
     }
 
     @GetMapping("/messages")
-    public Page<ChatMessageResponse> getMessages(@PathVariable Long groupId, @PageableDefault Pageable pageable){
-        return chatService.getMessages(groupId,pageable);
+    public Page<ChatMessageResponse> getMessages(@PathVariable Long groupId, @PageableDefault Pageable pageable, Principal principal) {
+        return chatService.getMessages(groupId, principal.getName(), pageable);
     }
 }

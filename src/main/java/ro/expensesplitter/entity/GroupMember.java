@@ -2,6 +2,8 @@ package ro.expensesplitter.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -27,6 +29,7 @@ public class GroupMember {
     private User user;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 16)
     @Builder.Default
     private GroupRole role = GroupRole.MEMBER;

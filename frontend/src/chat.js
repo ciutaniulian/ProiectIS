@@ -63,7 +63,7 @@ export function connectGroupChat({ groupId, onMessage, onStatusChange }) {
 
   client.onConnect = () => {
     onStatusChange?.('connected')
-    client.subscribe(`/topic/group/${groupId}`, (frame) => {
+    client.subscribe(`/user/queue/group/${groupId}`, (frame) => {
       try {
         const payload = JSON.parse(frame.body)
         onMessage?.(payload)

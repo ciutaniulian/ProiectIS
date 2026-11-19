@@ -1,52 +1,31 @@
 package ro.expensesplitter.controller;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.mockito.InOrder;
 import ro.expensesplitter.dto.ChatMessageResponse;
 import ro.expensesplitter.dto.SendMessageRequest;
 import ro.expensesplitter.service.ChatService;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-public class ChatWebSocketControllerTest {
-
-    private ChatService chatService;
-
-    private SimpMessagingTemplate template;
-
-    private ChatWebSocketController controller;
-
-    @BeforeEach
-    void setup()
-    {
-        chatService=mock(ChatService.class);
-        template=mock(SimpMessagingTemplate.class);
-        controller = new ChatWebSocketController(chatService,template);
-    }
+class ChatWebSocketControllerTest {
 
     @Test
-    void sendMessageTest()
-    {
-        Long groupId = 1L;
-        SendMessageRequest request = new SendMessageRequest("test");
-        ChatMessageResponse response = new ChatMessageResponse(1L, groupId, 1L, "Ana", "test", LocalDateTime.of(2026, 1, 1, 12, 0));
-        Principal principal = mock(Principal.class);
+    void persistsBeforeDelivering() {
+        ChatService chatService = mock(ChatService.class);
+        ChatWebSocketController controller = new ChatWebSocketController(chatService);
+        var request = new SendMessageRequest("Hello");
+        var response = new ChatMessageResponse(1L, 2L, 3L, "Ana", "Hello", LocalDateTime.now());
+        when(chatService.sendMessage(2L, "ana@example.com", request)).thenReturn(response);
 
-        when(principal.getName()).thenReturn("ana@test.com");
+        controller.sendMessage(2L, request, () -> "ana@example.com");
 
-        when(chatService.sendMessage(groupId,"ana@test.com",request)).thenReturn(response);
-
-        when(chatService.sendMessage(groupId, 1L, request)).thenReturn(response);
-
-        controller.sendMessage(groupId,request,principal);
-
-        verify(chatService).sendMessage(groupId, "ana@test.com", request);
-        verify(template).convertAndSend("/topic/group/" + groupId, response);
+        InOrder order = inOrder(chatService);
+        order.verify(chatService).sendMessage(2L, "ana@example.com", request);
+        order.verify(chatService).deliverMessage(response);
     }
-
 }
