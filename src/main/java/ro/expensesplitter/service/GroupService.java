@@ -70,8 +70,7 @@ public class GroupService {
 
     @Transactional
     public void addMember(Long groupId, AddMemberRequest memberRequest, String requesterEmail){
-        Group group = groupRepository.findById(groupId).orElseThrow(()->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        Group group = lockGroup(groupId);
         User requester = userRepository.findByEmail(requesterEmail).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Requester not found"));
         boolean isRequesterPartOfGroup = isUserMember(group.getId(), requester.getId());
@@ -104,4 +103,57 @@ public class GroupService {
                 .toList();
     }
 
+    @Transactional
+    public void promoteMember(Long groupId, Long userId, String requesterEmail) {
+        lockGroup(groupId);
+        requireAdmin(groupId, requesterEmail);
+        findTargetMember(groupId, userId).setRole(GroupRole.ADMIN);
+    }
+
+    @Transactional
+    public void removeMember(Long groupId, Long userId, String requesterEmail) {
+        lockGroup(groupId);
+        GroupMember admin = requireAdmin(groupId, requesterEmail);
+        if (admin.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use the leave operation for your own membership");
+        }
+        groupMemberRepository.delete(findTargetMember(groupId, userId));
+    }
+
+    @Transactional
+    public void leaveGroup(Long groupId, String requesterEmail) {
+        lockGroup(groupId);
+        GroupMember member = requireMembership(groupId, requesterEmail);
+        if (member.getRole() == GroupRole.ADMIN
+                && groupMemberRepository.countByGroupIdAndRole(groupId, GroupRole.ADMIN) == 1
+                && groupMemberRepository.countByGroupId(groupId) > 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Promote another member before leaving");
+        }
+        groupMemberRepository.delete(member);
+    }
+
+    private Group lockGroup(Long groupId) {
+        return groupRepository.findByIdForUpdate(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+    }
+
+    private GroupMember requireMembership(Long groupId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return groupMemberRepository.findByGroupIdAndUserId(groupId, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a member of this group"));
+    }
+
+    private GroupMember requireAdmin(Long groupId, String email) {
+        GroupMember membership = requireMembership(groupId, email);
+        if (membership.getRole() != GroupRole.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only group administrators can manage roles and remove members");
+        }
+        return membership;
+    }
+
+    private GroupMember findTargetMember(Long groupId, Long userId) {
+        return groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found"));
+    }
 }

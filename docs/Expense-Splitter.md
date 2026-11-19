@@ -101,8 +101,8 @@ Aplicația trebuie să permită:
 - Un utilizator nu poate achita o datorie mai mare decât suma datorată, dacă aplicația folosește plata directă a unei datorii.
 - Istoricul cheltuielilor trebuie păstrat, inclusiv evidența cheltuielilor șterse.
 - Doar un administrator al aplicației poate șterge o cheltuială; utilizatorii obișnuiți nu pot șterge nici cheltuielile adăugate de ei.
-- Toți membrii unui grup au aceleași permisiuni. Creatorul grupului nu primește drepturi suplimentare.
-- Rolul de administrator este global și nu depinde de apartenența la un grup.
+- Creatorul grupului devine administrator al grupului. Administratorii grupului pot promova alți membri și îi pot scoate din grup. Orice membru poate ieși voluntar.
+- Rolul de administrator al aplicației este global. Rolul de administrator al grupului se atribuie separat, pe fiecare apartenență.
 - Ștergerea sau modificarea unei cheltuieli trebuie să ducă la recalcularea soldurilor.
 
 ## 6. Simplificarea datoriilor
@@ -246,7 +246,7 @@ vor fi stabilite după ce ideea și cerințele sunt finalizate.
 
 Aplicația are două roluri globale: **USER** (utilizator obișnuit) și **ADMIN** (administrator al aplicației). Pot exista **unul sau mai mulți administratori**.
 
-**Toți membrii unui grup au aceleași permisiuni**, inclusiv persoana care a creat grupul. Apartenența la un grup nu conferă rolul de administrator. Egalitatea permisiunilor nu impune împărțirea egală a sumelor: metodele de împărțire din secțiunea 7 rămân disponibile.
+Administratorii de grup gestionează membrii grupului lor. Membrii pot adăuga persoane și pot ieși voluntar. Dacă în grup rămân alți membri, ultimul administrator trebuie să promoveze un membru înainte de a ieși. Dacă pleacă singurul membru, grupul rămâne în baza de date fără membri. Metodele de împărțire din secțiunea 7 rămân disponibile.
 
 Administratorul gestionează cheltuielile la nivelul întregii aplicații, printr-o interfață de administrare, și poate șterge un bill din orice grup fără să fie membru al acelui grup.
 
@@ -321,7 +321,7 @@ Prin `SecurityFilterChain`, rutele de înregistrare și autentificare sunt publi
 Serverul aplică următoarele reguli:
 
 - Rolurile USER și ADMIN sunt asociate contului la nivelul aplicației; apartenența la grup nu conține un rol de administrator.
-- Pentru operațiile obișnuite, serverul verifică apartenența la grup. Toți membrii beneficiază de aceleași permisiuni.
+- Pentru operațiile obișnuite, serverul verifică apartenența la grup. Pentru promovări și scoaterea altor membri, serverul verifică și rolul de administrator în grupul respectiv.
 - Consultarea cheltuielilor pentru administrare și ștergerea unui bill sunt permise conturilor ADMIN, inclusiv când administratorul nu face parte din grup.
 - Ștergerea este verificată și în stratul de servicii, de exemplu prin `@PreAuthorize("hasRole('ADMIN')")`, cu method security activat prin `@EnableMethodSecurity`.
 - În convenția Spring Security, `hasRole('ADMIN')` verifică autoritatea `ROLE_ADMIN`; rolurile stocate trebuie mapate consecvent la autorități.
@@ -345,7 +345,7 @@ Autorizarea metodelor completează regulile pentru cererile HTTP. [Documentație
 | --- | --- |
 | Utilizator neautentificat încearcă să acceseze datele unui grup prin API | Cererea este respinsă cu `401 Unauthorized`. |
 | Membru încearcă să șteargă un bill, inclusiv unul creat de el | Cererea este respinsă cu `403 Forbidden`; datele rămân intacte. |
-| Creatorul unui grup, cu rol USER, încearcă să șteargă un bill | Cererea este respinsă cu `403 Forbidden`; creatorul are aceleași permisiuni ca ceilalți membri. |
+| Creatorul unui grup, cu rol USER, încearcă să șteargă un bill | Cererea este respinsă cu `403 Forbidden`; rolul de administrator de grup permite gestionarea apartenenței. |
 | Utilizator schimbă identificatorul grupului sau al bill-ului pentru a accesa date străine | Cererea este respinsă fără a expune datele grupului. |
 | Administrator al aplicației șterge un bill dintr-un grup în care nu este membru | Operația este permisă; bill-ul este marcat ca șters, intervenția este înregistrată, iar soldurile grupului sunt recalculate. |
 | Utilizator cu rol USER încearcă să acceseze interfața sau API-ul de administrare | Accesul este respins cu `403 Forbidden`. |

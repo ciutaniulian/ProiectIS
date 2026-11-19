@@ -122,7 +122,7 @@ public class GroupServiceTest {
 
     @Test
     void addMemberSuccessSavesMembership() {
-        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(groupRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(group));
         when(userRepository.findByEmail("andrei@gmail.com")).thenReturn(Optional.of(requester));
         when(userRepository.findByEmail("ana@gmail.com")).thenReturn(Optional.of(newUser));
         when(groupMemberRepository.existsByGroupIdAndUserId(10L, 1L)).thenReturn(true);
@@ -135,14 +135,14 @@ public class GroupServiceTest {
 
     @Test
     void addMemberGroupNotFoundReturns404() {
-        when(groupRepository.findById(10L)).thenReturn(Optional.empty());
+        when(groupRepository.findByIdForUpdate(10L)).thenReturn(Optional.empty());
 
         assertAddMemberFails(HttpStatus.NOT_FOUND);
     }
 
     @Test
     void addMemberRequesterNotMemberReturns403() {
-        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(groupRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(group));
         when(userRepository.findByEmail("andrei@gmail.com")).thenReturn(Optional.of(requester));
         when(groupMemberRepository.existsByGroupIdAndUserId(10L, 1L)).thenReturn(false);
 
@@ -151,7 +151,7 @@ public class GroupServiceTest {
 
     @Test
     void addMemberUnknownNewUserReturns404() {
-        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(groupRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(group));
         when(userRepository.findByEmail("andrei@gmail.com")).thenReturn(Optional.of(requester));
         when(groupMemberRepository.existsByGroupIdAndUserId(10L, 1L)).thenReturn(true);
         when(userRepository.findByEmail("ana@gmail.com")).thenReturn(Optional.empty());
@@ -161,7 +161,7 @@ public class GroupServiceTest {
 
     @Test
     void addMemberAlreadyMemberReturns409() {
-        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(groupRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(group));
         when(userRepository.findByEmail("andrei@gmail.com")).thenReturn(Optional.of(requester));
         when(userRepository.findByEmail("ana@gmail.com")).thenReturn(Optional.of(newUser));
         when(groupMemberRepository.existsByGroupIdAndUserId(10L, 1L)).thenReturn(true);
@@ -206,5 +206,61 @@ public class GroupServiceTest {
                 () -> groupService.getGroupMembers(10L, "andrei@gmail.com"));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(groupMemberRepository, never()).findByGroupId(any());
+    }
+    @Test
+    void groupAdminCanPromoteAndRemoveAnotherMember() {
+        stubRequesterMembership(GroupRole.ADMIN);
+        GroupMember target = GroupMember.builder().group(group).user(newUser).build();
+        when(groupMemberRepository.findByGroupIdAndUserId(10L, 2L)).thenReturn(Optional.of(target));
+
+        groupService.promoteMember(10L, 2L, requester.getEmail());
+        assertEquals(GroupRole.ADMIN, target.getRole());
+
+        groupService.removeMember(10L, 2L, requester.getEmail());
+        verify(groupMemberRepository).delete(target);
+    }
+
+    @Test
+    void ordinaryMemberCannotPromoteOrRemoveButCanLeave() {
+        GroupMember membership = stubRequesterMembership(GroupRole.MEMBER);
+
+        assertEquals(HttpStatus.FORBIDDEN, assertThrows(ResponseStatusException.class,
+                () -> groupService.promoteMember(10L, 2L, requester.getEmail())).getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, assertThrows(ResponseStatusException.class,
+                () -> groupService.removeMember(10L, 2L, requester.getEmail())).getStatusCode());
+
+        groupService.leaveGroup(10L, requester.getEmail());
+        verify(groupMemberRepository).delete(membership);
+    }
+
+    @Test
+    void lastAdminMustPromoteSomeoneBeforeLeavingAnOccupiedGroup() {
+        stubRequesterMembership(GroupRole.ADMIN);
+        when(groupMemberRepository.countByGroupIdAndRole(10L, GroupRole.ADMIN)).thenReturn(1L);
+        when(groupMemberRepository.countByGroupId(10L)).thenReturn(2L);
+
+        assertEquals(HttpStatus.CONFLICT, assertThrows(ResponseStatusException.class,
+                () -> groupService.leaveGroup(10L, requester.getEmail())).getStatusCode());
+        verify(groupMemberRepository, never()).delete(any(GroupMember.class));
+    }
+
+    @Test
+    void onlyMemberMayLeaveAnEmptyGroupBehind() {
+        GroupMember membership = stubRequesterMembership(GroupRole.ADMIN);
+        when(groupMemberRepository.countByGroupIdAndRole(10L, GroupRole.ADMIN)).thenReturn(1L);
+        when(groupMemberRepository.countByGroupId(10L)).thenReturn(1L);
+
+        groupService.leaveGroup(10L, requester.getEmail());
+
+        verify(groupMemberRepository).delete(membership);
+        verify(groupRepository, never()).delete(any(Group.class));
+    }
+
+    private GroupMember stubRequesterMembership(GroupRole role) {
+        GroupMember membership = GroupMember.builder().group(group).user(requester).role(role).build();
+        when(groupRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(group));
+        when(userRepository.findByEmail(requester.getEmail())).thenReturn(Optional.of(requester));
+        when(groupMemberRepository.findByGroupIdAndUserId(10L, 1L)).thenReturn(Optional.of(membership));
+        return membership;
     }
 }

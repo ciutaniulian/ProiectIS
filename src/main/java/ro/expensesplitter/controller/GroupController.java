@@ -45,4 +45,21 @@ public class GroupController {
         List<MemberResponse> memberResponses= groupService.getGroupMembers(groupId,authentication.getName());
         return ResponseEntity.ok(memberResponses);
     }
+    @PatchMapping("/{groupId}/members/{userId}/role")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void promoteMember(@PathVariable Long groupId, @PathVariable Long userId, Authentication authentication) {
+        groupService.promoteMember(groupId, userId, authentication.getName());
+    }
+
+    @DeleteMapping("/{groupId}/members/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeMember(@PathVariable Long groupId, @PathVariable Long userId, Authentication authentication) {
+        groupService.removeMember(groupId, userId, authentication.getName());
+    }
+
+    @DeleteMapping("/{groupId}/members/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void leaveGroup(@PathVariable Long groupId, Authentication authentication) {
+        groupService.leaveGroup(groupId, authentication.getName());
+    }
 }
