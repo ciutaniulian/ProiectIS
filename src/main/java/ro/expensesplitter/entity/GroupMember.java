@@ -26,6 +26,11 @@ public class GroupMember {
     @JoinColumn(name="user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    @Builder.Default
+    private GroupRole role = GroupRole.MEMBER;
+
     @Column(nullable = false, updatable = false)
     private Instant joinedAt;
 

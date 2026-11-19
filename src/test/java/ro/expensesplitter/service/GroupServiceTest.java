@@ -11,6 +11,7 @@ import ro.expensesplitter.dto.GroupResponse;
 import ro.expensesplitter.dto.MemberResponse;
 import ro.expensesplitter.entity.Group;
 import ro.expensesplitter.entity.GroupMember;
+import ro.expensesplitter.entity.GroupRole;
 import ro.expensesplitter.entity.User;
 import ro.expensesplitter.repository.GroupMemberRepository;
 import ro.expensesplitter.repository.GroupRepository;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -67,7 +69,7 @@ public class GroupServiceTest {
     // ---------- createGroup ----------
 
     @Test
-    void createGroupSavesGroupAndRegistersCreatorAsMember() {
+    void createGroupRegistersCreatorAsGroupAdmin() {
         when(userRepository.findByEmail("andrei@gmail.com")).thenReturn(Optional.of(requester));
         when(groupRepository.save(any(Group.class))).thenReturn(group);
 
@@ -75,7 +77,8 @@ public class GroupServiceTest {
 
         assertEquals(10L, response.id());
         assertEquals(1L, response.createdById());
-        verify(groupMemberRepository).save(any(GroupMember.class));
+        assertEquals(GroupRole.ADMIN, response.role());
+        verify(groupMemberRepository).save(argThat(member -> member.getRole() == GroupRole.ADMIN));
     }
 
     // ---------- isUserMember ----------
@@ -94,12 +97,16 @@ public class GroupServiceTest {
     @Test
     void getMyGroupsReturnsMappedResponses() {
         when(userRepository.findByEmail("andrei@gmail.com")).thenReturn(Optional.of(requester));
-        when(groupMemberRepository.findGroupsByUserId(1L)).thenReturn(List.of(group));
+        Group anotherGroup = Group.builder().id(11L).name("Home").createdBy(newUser).build();
+        GroupMember owned = GroupMember.builder().group(group).user(requester).role(GroupRole.ADMIN).build();
+        GroupMember joined = GroupMember.builder().group(anotherGroup).user(requester).build();
+        when(groupMemberRepository.findMembershipsByUserId(1L)).thenReturn(List.of(owned, joined));
 
         List<GroupResponse> result = groupService.getMyGroups("andrei@gmail.com");
 
-        assertEquals(1, result.size());
-        assertEquals(new GroupResponse(10L, "Trip", "desc", 1L), result.get(0));
+        assertEquals(List.of(
+                new GroupResponse(10L, "Trip", "desc", 1L, GroupRole.ADMIN),
+                new GroupResponse(11L, "Home", null, 2L, GroupRole.MEMBER)), result);
     }
 
     @Test
@@ -123,7 +130,7 @@ public class GroupServiceTest {
 
         groupService.addMember(10L, new AddMemberRequest("ana@gmail.com"), "andrei@gmail.com");
 
-        verify(groupMemberRepository).save(any(GroupMember.class));
+        verify(groupMemberRepository).save(argThat(member -> member.getRole() == GroupRole.MEMBER));
     }
 
     @Test
@@ -176,7 +183,7 @@ public class GroupServiceTest {
 
         List<MemberResponse> result = groupService.getGroupMembers(10L, "andrei@gmail.com");
 
-        assertEquals(List.of(new MemberResponse(2L, "Ana", "ana@gmail.com", joinedAt)), result);
+        assertEquals(List.of(new MemberResponse(2L, "Ana", "ana@gmail.com", joinedAt, GroupRole.MEMBER)), result);
     }
 
     @Test

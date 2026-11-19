@@ -7,3 +7,7 @@
 5. For the frontend, run `npm.cmd install` and `npm.cmd run dev` from `frontend`, then open the URL printed by Vite.
 
 The named volume `mysql_data` keeps database data when the container is stopped or recreated. Use `docker compose stop` to stop MySQL. Changing the password in `.env` does not change the password in an already initialized database.
+
+## Upgrading an existing database
+
+Stop the application and apply [001-group-roles.sql](docs/migrations/001-group-roles.sql) once to the existing MySQL schema before starting the updated version. It assigns the administrator role to each existing group's creator. A fresh database gets the new schema from Hibernate on its first start.

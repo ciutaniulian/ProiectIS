@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import ro.expensesplitter.dto.AddMemberRequest;
 import ro.expensesplitter.dto.GroupResponse;
 import ro.expensesplitter.dto.MemberResponse;
+import ro.expensesplitter.entity.GroupRole;
 import ro.expensesplitter.service.GroupService;
 
 import java.time.Instant;
@@ -35,7 +36,7 @@ public class GroupControllerTest {
 
     @Test
     void getMyGroupsReturns200WithGroups() {
-        List<GroupResponse> groups = List.of(new GroupResponse(10L, "Trip", "desc", 1L));
+        List<GroupResponse> groups = List.of(new GroupResponse(10L, "Trip", "desc", 1L, GroupRole.ADMIN));
         when(groupService.getMyGroups("andrei@gmail.com")).thenReturn(groups);
 
         ResponseEntity<List<GroupResponse>> response = controller.getMyGroups(authentication);
@@ -58,7 +59,7 @@ public class GroupControllerTest {
     @Test
     void getGroupMembersReturns200WithMembers() {
         List<MemberResponse> members = List.of(
-                new MemberResponse(2L, "Ana", "ana@gmail.com", Instant.parse("2026-01-01T10:00:00Z")));
+                new MemberResponse(2L, "Ana", "ana@gmail.com", Instant.parse("2026-01-01T10:00:00Z"), GroupRole.MEMBER));
         when(groupService.getGroupMembers(10L, "andrei@gmail.com")).thenReturn(members);
 
         ResponseEntity<List<MemberResponse>> response = controller.getGroupMembers(10L, authentication);

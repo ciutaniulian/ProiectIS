@@ -1,7 +1,6 @@
 package ro.expensesplitter.service;
 
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +12,7 @@ import ro.expensesplitter.dto.GroupResponse;
 import ro.expensesplitter.dto.MemberResponse;
 import ro.expensesplitter.entity.Group;
 import ro.expensesplitter.entity.GroupMember;
+import ro.expensesplitter.entity.GroupRole;
 import ro.expensesplitter.entity.User;
 import ro.expensesplitter.repository.GroupMemberRepository;
 import ro.expensesplitter.repository.GroupRepository;
@@ -41,10 +41,11 @@ public class GroupService {
         GroupMember membership = GroupMember.builder()
                 .group(savedGroup)
                 .user(creator)
+                .role(GroupRole.ADMIN)
                 .build();
         groupMemberRepository.save(membership);
 
-        return  new GroupResponse(savedGroup.getId(), savedGroup.getName(), savedGroup.getDescription(), creator.getId());
+        return toGroupResponse(membership);
     }
 
     @Transactional(readOnly = true)
@@ -56,10 +57,15 @@ public class GroupService {
     public List<GroupResponse> getMyGroups(String userEmail){
         User user = userRepository.findByEmail(userEmail).orElseThrow(()->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        List<Group> userGroups = groupMemberRepository.findGroupsByUserId(user.getId());
-        return userGroups.stream()
-                .map(x -> new GroupResponse(x.getId(), x.getName(), x.getDescription(), x.getCreatedBy().getId()))
+        return groupMemberRepository.findMembershipsByUserId(user.getId()).stream()
+                .map(GroupService::toGroupResponse)
                 .toList();
+    }
+
+    private static GroupResponse toGroupResponse(GroupMember membership) {
+        Group group = membership.getGroup();
+        return new GroupResponse(group.getId(), group.getName(), group.getDescription(),
+                group.getCreatedBy().getId(), membership.getRole());
     }
 
     @Transactional
@@ -94,7 +100,7 @@ public class GroupService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a member of this group");
         List<GroupMember> groupMembers = groupMemberRepository.findByGroupId(groupId);
         return groupMembers.stream()
-                .map(x->new MemberResponse(x.getUser().getId(),x.getUser().getName(),x.getUser().getEmail(),x.getJoinedAt()))
+                .map(x->new MemberResponse(x.getUser().getId(),x.getUser().getName(),x.getUser().getEmail(),x.getJoinedAt(),x.getRole()))
                 .toList();
     }
 
