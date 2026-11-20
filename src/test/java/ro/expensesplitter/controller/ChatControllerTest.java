@@ -8,7 +8,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ro.expensesplitter.dto.ChatMessageResponse;
 import ro.expensesplitter.service.ChatService;
+import ro.expensesplitter.service.GroupChatAccess;
 
+import java.security.Principal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,19 +33,20 @@ public class ChatControllerTest {
     @Test
     void returnedMessagesPageTest()
     {
-        ChatController controller = new ChatController(chatService);
+        ChatController controller = new ChatController(chatService, mock(GroupChatAccess.class));
+        Principal principal = () -> "ana@test.com";
 
         Long groupId = 1L;
         Pageable pageable = PageRequest.of(0,20);
 
         Page<ChatMessageResponse> responses = new PageImpl<>(List.of(mockResponse));
-        when(chatService.getMessages(groupId,pageable)).thenReturn(responses);
+        when(chatService.getMessages(groupId,principal,pageable)).thenReturn(responses);
 
-        Page<ChatMessageResponse> result = controller.getMessages(groupId,pageable);
+        Page<ChatMessageResponse> result = controller.getMessages(groupId,principal,pageable);
 
 
         assertNotNull(result);
         assertEquals(responses,result);
-        verify(chatService).getMessages(groupId,pageable);
+        verify(chatService).getMessages(groupId,principal,pageable);
     }
 }

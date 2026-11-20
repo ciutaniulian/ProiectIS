@@ -26,13 +26,21 @@ async function request(path, options = {}) {
   throw new Error('The server could not complete your request. Please try again.')
 }
 
-async function submit(path, body, contentType, method = 'POST') {
+export async function getCsrfToken() {
   // Fetch a fresh token because Spring rotates it after login and logout.
-  const csrfResponse = await request('csrf')
-  const csrf = await csrfResponse.json()
+  const response = await request('csrf')
+  return response.json()
+}
+
+export async function getCsrfHeaders() {
+  const csrf = await getCsrfToken()
+  return { [csrf.headerName]: csrf.token }
+}
+
+async function submit(path, body, contentType, method = 'POST') {
   return request(path, {
     method,
-    headers: { [csrf.headerName]: csrf.token, ...(contentType && { 'Content-Type': contentType }) },
+    headers: { ...await getCsrfHeaders(), ...(contentType && { 'Content-Type': contentType }) },
     body,
   })
 }

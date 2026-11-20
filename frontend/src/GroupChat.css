@@ -128,7 +128,7 @@
 }
 
 .status-dot.error,
-.status-dot.disconnected {
+.status-dot.reconnecting {
   background: #d32f2f;
 }
 
@@ -147,7 +147,16 @@
   flex-direction: column;
   gap: 12px;
   background: #fafaf7;
-  scroll-behavior: smooth;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-load-older {
+  align-self: center;
 }
 
 .chat-empty {
@@ -275,6 +284,17 @@
   padding: 12px 16px;
   background: var(--surface);
   border-top: 1px solid var(--line);
+}
+
+.chat-footer .chat-error-banner {
+  margin-bottom: 8px;
+}
+
+.chat-readonly {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
 }
 
 .chat-input-form {

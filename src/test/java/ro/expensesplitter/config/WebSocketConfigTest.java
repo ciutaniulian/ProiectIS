@@ -19,10 +19,11 @@ public class WebSocketConfigTest {
     @Test
     void messageBrokerRegistryTest(){
 
-        WebSocketConfig config = new WebSocketConfig();
+        WebSocketConfig config = new WebSocketConfig(
+                mock(ChatInboundAuthorization.class), mock(ChatOutboundAuthorization.class));
         config.configureMessageBroker(registry);
 
-        verify(registry).enableSimpleBroker("/topic");
+        verify(registry).enableSimpleBroker("/topic", "/queue");
         verify(registry).setApplicationDestinationPrefixes("/app");
     }
 

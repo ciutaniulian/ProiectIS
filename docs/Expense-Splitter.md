@@ -49,7 +49,7 @@ Un utilizator poate:
 - să își creeze un cont;
 - să se autentifice;
 - să creeze un grup;
-- să invite sau să adauge membri într-un grup;
+- să invite persoane într-un grup și să accepte sau să refuze invitațiile primite;
 - să vadă grupurile din care face parte;
 - să adauge cheltuieli;
 - să specifice cine a plătit o cheltuială;
@@ -67,15 +67,15 @@ Aplicația trebuie să permită:
 
 1. Autentificarea utilizatorilor.
 2. Crearea unui grup de cheltuieli.
-3. Adăugarea sau invitarea membrilor într-un grup.
+3. Invitarea prin e-mail și aderarea prin acceptarea invitației.
 4. Vizualizarea membrilor unui grup.
 5. Adăugarea unei cheltuieli.
 6. Specificarea utilizatorului care a plătit cheltuiala.
 7. Selectarea persoanelor pentru care a fost făcută cheltuiala.
 8. Împărțirea unei cheltuieli:
-    - în mod egal;
-    - după sume stabilite manual;
-    - opțional, după procente.
+   - în mod egal;
+   - după sume stabilite manual;
+   - opțional, după procente.
 9. Calcularea automată a soldului fiecărui membru.
 10. Calcularea relațiilor de datorie:
     - cine trebuie să plătească;
@@ -173,8 +173,6 @@ Aceste funcționalități **nu sunt obligatorii pentru prima versiune**. Pot fi 
 - export al cheltuielilor;
 - mai multe monede;
 - conversie valutară;
-- posibilitatea de a arhiva un grup;
-- posibilitatea de a părăsi un grup;
 - comentarii la o cheltuială;
 - căutare și filtrare în istoricul cheltuielilor.
 
@@ -256,7 +254,7 @@ Administratorul gestionează cheltuielile la nivelul întregii aplicații, print
 | --- | --- | --- |
 | Crearea unui grup | Da | Da |
 | Vizualizarea datelor și adăugarea cheltuielilor în propriile grupuri | Da | Da, ca membru |
-| Invitarea sau adăugarea membrilor în propriile grupuri | Da | Da, ca membru |
+| Invitarea persoanelor în propriile grupuri | Da | Da, ca membru |
 | Înregistrarea unei plăți proprii către alt membru | Da | Da, ca membru |
 | Consultarea cheltuielilor din toate grupurile în interfața de administrare | Nu | Da |
 | Ștergerea unei cheltuieli (bill) din orice grup | Nu | Da |
@@ -354,8 +352,6 @@ Autorizarea metodelor completează regulile pentru cererile HTTP. [Documentație
 | O cerere care modifică date nu are un token CSRF valid | Cererea este respinsă. |
 | Utilizator se deconectează și reutilizează sesiunea veche | Accesul la datele protejate este respins. |
 
-
-
 ### 14.6 Niste detalii despre imparteala pe treaba:
 
 1. Colegul 1: Înfrumusețarea Frontend-ului (UI / UX / Styling)
@@ -368,13 +364,13 @@ Autorizarea metodelor completează regulile pentru cererile HTTP. [Documentație
 2. EU   : Backend – Modulul Grupuri și Membri
    Branch Git: feature/group-management
    Ce face concret:
-   Entitățile JPA: Group (id, nume, descriere, creatDe) și GroupMember (groupId, userId, rol, joinedAt).
+   Entitățile JPA: ExpenseGroup (id, nume, descriere, stare) și GroupMembership (groupId, userId).
    Repository și Service pentru operații de grup.
    Endpoints REST:
-   POST /groups (creează un grup)
-   GET /groups (grupurile din care fac parte)
-   POST /groups/{id}/members (adaugă membru după email/username)
-   Metoda cheie oferită echipei: boolean isUserMember(Long groupId, Long userId) (o veți apela și tu la Chat, și Colegul 3 la Cheltuieli).
+   POST /api/groups (creează un grup)
+   GET /api/groups (grupurile din care fac parte)
+   POST /api/groups/{id}/invitations (creează o invitație pentru o adresă de e-mail)
+   Verificarea apartenenței folosește GroupMembershipRepository și identitatea contului autentificat.
 3. Colegul 3: Backend – Modulul Cheltuieli (Expenses)
    Branch Git: feature/expenses-splitting
    Ce face concret:
@@ -391,3 +387,13 @@ Autorizarea metodelor completează regulile pentru cererile HTTP. [Documentație
    Securitate (doar membrii grupului pot citi/scrie).
    Realtime cu WebSocket (Spring WebSocket + STOMP).
    Componenta React de Chat (ChatBox) care se integrează în pagina de grup.
+
+## 15. Grupuri, invitații și chat
+
+- Un cont autentificat poate crea un grup activ cu nume și descriere opțională. Creatorul devine primul membru. Lista personală permite căutarea după nume și afișează separat grupurile active și arhivate. Fiecare grup are o adresă proprie.
+- Toți membrii au aceleași drepturi. Într-un grup activ, oricare dintre ei poate edita detaliile, invita persoane și elimina alt membru, inclusiv creatorul. Apartenența este obligatorie pentru consultarea grupului, a membrilor, a activității și a chatului. Rolul global ADMIN urmează aceleași reguli pentru aceste operații.
+- Invitația este valabilă șapte zile. Destinatarul o poate accepta sau refuza după autentificarea cu adresa invitată. Pentru cineva fără cont, un membru poate partaja manual linkul. O invitație revocată, refuzată sau expirată trebuie înlocuită cu una nouă.
+- Orice membru poate părăsi grupul, iar ultimul membru confirmă închiderea acestuia. Ieșirea sau eliminarea retrage accesul la grup și la conversație. Mesajele rămân în istoric. Închiderea este definitivă în interfață și revocă invitațiile rămase.
+- Orice membru poate arhiva sau restaura grupul. În arhivă se pot consulta detaliile, membrii, activitatea și mesajele. Editarea, eliminarea membrilor, operațiile cu invitații și trimiterea de mesaje se reiau după restaurare. Termenul invitațiilor continuă să curgă în arhivă.
+- Membrii pot trimite mesaje în timp real, parcurge istoricul și recupera mesajele ratate la reconectare. Activitatea grupului consemnează crearea, schimbarea detaliilor, intrarea și ieșirea membrilor, eliminarea, arhivarea și restaurarea.
+

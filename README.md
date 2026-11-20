@@ -7,3 +7,7 @@
 5. For the frontend, run `npm.cmd install` and `npm.cmd run dev` from `frontend`, then open the URL printed by Vite.
 
 The named volume `mysql_data` keeps database data when the container is stopped or recreated. Use `docker compose stop` to stop MySQL. Changing the password in `.env` does not change the password in an already initialized database.
+
+## Upgrading an existing database
+
+Start the updated application with the existing database. The startup migration imports memberships from the previous group roles schema once, preserving group IDs and chat history. The updated group permissions are based on membership, as described in the [group specification](docs/Expense-Splitter.md).

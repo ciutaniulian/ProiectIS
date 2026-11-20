@@ -31,6 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+/.local-data/
 
 # Local environment configuration
 .env

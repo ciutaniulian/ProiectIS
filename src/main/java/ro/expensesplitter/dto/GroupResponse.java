@@ -1,8 +1,5 @@
 package ro.expensesplitter.dto;
 
-public record GroupResponse(   Long id,
-                               String name,
-                               String description,
-                               Long createdById) {
+import ro.expensesplitter.entity.GroupStatus;
 
-}
+public record GroupResponse(Long id, String name, String description, long memberCount, GroupStatus status) {}

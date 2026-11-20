@@ -47,7 +47,8 @@ export default function AuthGateway() {
     </main>
   )
 
-  if (!user) return <AuthForm onAuthenticated={setUser} />
+  if (!user) return <AuthForm onAuthenticated={setUser}
+    groupInvitation={window.location.pathname.startsWith('/group-invitations/')} />
 
   return (
     <>
