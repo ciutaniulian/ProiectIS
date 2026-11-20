@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { login, register } from './auth.js'
 
-export default function AuthForm({ onAuthenticated }) {
+export default function AuthForm({ onAuthenticated, groupInvitation }) {
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
@@ -54,7 +54,9 @@ export default function AuthForm({ onAuthenticated }) {
       </header>
       <section className="auth-content" aria-labelledby="auth-heading">
         <h1 id="auth-heading">{registering ? 'Share more. Settle simply.' : 'Welcome back.'}</h1>
-        <p className="auth-description">{registering ? 'Create an account to start splitting expenses together.' : 'Log in to your Expense Splitter account.'}</p>
+        <p className="auth-description">{groupInvitation
+          ? 'Use the email address that received the group invitation.'
+          : registering ? 'Create an account to start splitting expenses together.' : 'Log in to your Expense Splitter account.'}</p>
         {notice && <p className="auth-notice" role="status">{notice}</p>}
         {error && <p className="auth-error" role="alert" id="auth-error">{error}</p>}
         <form onSubmit={handleSubmit} aria-describedby={error ? 'auth-error' : undefined} aria-busy={busy}>

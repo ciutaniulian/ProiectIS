@@ -6,11 +6,6 @@ export const demoDashboard = {
     payableCents: 18000,
     totalExpensesCents: 94000,
   },
-  groups: [
-    { id: 1, name: 'Weekend in Brașov', memberCount: 4 },
-    { id: 2, name: 'Apartment', memberCount: 3 },
-    { id: 3, name: 'University friends', memberCount: 5 },
-  ],
   expenses: [
     { id: 1, description: 'Dinner together', groupName: 'University friends', paidBy: 'Iulian', amountCents: 36000, date: '2026-10-13' },
     { id: 2, description: 'Weekly groceries', groupName: 'Apartment', paidBy: 'Ana', amountCents: 24000, date: '2026-10-12' },

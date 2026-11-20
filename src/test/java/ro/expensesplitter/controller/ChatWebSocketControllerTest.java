@@ -39,13 +39,11 @@ public class ChatWebSocketControllerTest {
 
         when(principal.getName()).thenReturn("ana@test.com");
 
-        when(chatService.sendMessage(groupId,"ana@test.com",request)).thenReturn(response);
-
-        when(chatService.sendMessage(groupId, 1L, request)).thenReturn(response);
+        when(chatService.sendMessage(groupId, principal, request)).thenReturn(response);
 
         controller.sendMessage(groupId,request,principal);
 
-        verify(chatService).sendMessage(groupId, "ana@test.com", request);
+        verify(chatService).sendMessage(groupId, principal, request);
         verify(template).convertAndSend("/topic/group/" + groupId, response);
     }
 
