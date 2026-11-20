@@ -1,0 +1,12 @@
+.profile-page {
+  width: min(100% - 32px, 460px);
+  margin: 24px auto;
+  border-radius: 20px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+
+.profile-page .auth-primary:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
